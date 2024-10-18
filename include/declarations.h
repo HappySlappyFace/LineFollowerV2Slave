@@ -93,6 +93,9 @@ extern double output2;
 extern double setpointRPM1; // Motor 1 (Right)
 extern double setpointRPM2; // Motor 2 (Left)
 
+// PID target error
+extern double targetError;
+
 // PID Timing Variables
 extern unsigned long lastPIDTime;
 extern const unsigned long PID_INTERVAL;

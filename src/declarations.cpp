@@ -46,7 +46,7 @@ const int PWM_CHANNEL_RIGHT_FORWARD = 2;
 const int PWM_CHANNEL_RIGHT_BACKWARD = 3;
 
 // PWM Settings
-const int PWM_FREQ = 20000;        // 20 kHz
+const int PWM_FREQ = 10000;        // 20 kHz
 const int PWM_RESOLUTION = 8;      // 8-bit resolution (0-255)
 
 // =====================
@@ -59,7 +59,7 @@ volatile long totalEncoderTicks2 = 0; // Motor 2 (Left)
 
 // Timing Variables for RPM Calculation
 unsigned long lastRPMCalcTime = 0;
-const unsigned long RPM_CALC_INTERVAL = 100; // 100 ms
+const unsigned long RPM_CALC_INTERVAL = 20; // 100 ms
 
 // RPM Calculation Variables
 double currentRPM1 = 0.0;
@@ -89,6 +89,8 @@ double output2 = 0.0;
 // RPM Setpoints
 double setpointRPM1 = 0.0; // Motor 1 (Right)
 double setpointRPM2 = 0.0; // Motor 2 (Left)
+
+double targetError = 0.0;
 
 // PID Timing Variables
 unsigned long lastPIDTime = 0;

@@ -133,6 +133,7 @@ void processSerialCommands() {
                 // Stop motors
                 setpointRPM1 = 0;
                 setpointRPM2 = 0;
+                targetError=0;
                 applyMotorControl();  // Stop both motors
 
                 // Provide feedback
@@ -141,9 +142,9 @@ void processSerialCommands() {
                     Serial.println("Motors stopped.");
                 }
             }
-            else if (command.startsWith("SETTGT:")) {
+            else if (command.startsWith("T:")) {
                 // Extract target value (this will be used as the error for PID)
-                String targetStr = command.substring(7); // After "SETTGT:"
+                String targetStr = command.substring(2); // After "T:"
                 double targetValue = targetStr.toDouble();
 
                 // Handle the target value as per your logic (for now just print)
@@ -155,6 +156,7 @@ void processSerialCommands() {
 
                 // This value can be assigned to a global variable you use in PID
                 // targetError = targetValue;
+                targetError = targetValue;
             }
             else {
                 // Unknown command

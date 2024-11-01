@@ -94,6 +94,7 @@ void loop() {
                     cl.setSpeed(200);  // Set speed to 100
                     // cl.setRPM1(100);
                     // cl.setRPM2(-100);
+                cl.setTarget(200);
                 break;
                 case 1:
                     cl.setPID(1.4, 1.4, 0);

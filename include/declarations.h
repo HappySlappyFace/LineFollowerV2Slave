@@ -115,4 +115,6 @@ extern const double deadband;     // Define an acceptable RPM error range (e.g.,
 
 extern String serialBuffer;
 
+
+
 #endif //SLAVELINEFOLLOWER_DECLARATIONS_H

@@ -54,8 +54,8 @@ void calculateRPM() {
 
 void calculatePID() {
     // Calculate Error (Setpoint RPM - Current RPM)
-    error1 = (setpointRPM1 - currentRPM1) - targetError/3;
-    error2 = (setpointRPM2 - currentRPM2) + targetError/3;
+    error1 = (setpointRPM1 - currentRPM1) - targetError;
+    error2 = (setpointRPM2 - currentRPM2) + targetError;
 
     // Implement Deadband
     if (abs(error1) < deadband) {

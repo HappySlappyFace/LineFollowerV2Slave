@@ -33,7 +33,7 @@ const uint8_t RIGHT_MOTOR_FORWARDS = 13;
 const uint8_t RIGHT_MOTOR_BACKWARDS = 4;
 
 // Button Pin (Optional for PID Tuning)
-const uint8_t BUTTON_PIN = 14;
+// const uint8_t BUTTON_PIN = 14;
 
 // ========================
 // === PWM Configuration ===
@@ -59,7 +59,7 @@ volatile long totalEncoderTicks2 = 0; // Motor 2 (Left)
 
 // Timing Variables for RPM Calculation
 unsigned long lastRPMCalcTime = 0;
-const unsigned long RPM_CALC_INTERVAL = 20; // 100 ms
+const unsigned long RPM_CALC_INTERVAL = 50; // 100 ms
 
 // RPM Calculation Variables
 double currentRPM1 = 0.0;
@@ -110,3 +110,4 @@ const double integralMin = -100.0; // Minimum integral value
 const double deadband = 5.0; // Define an acceptable RPM error range (e.g., ±5 RPM)
 
 String serialBuffer = "";
+

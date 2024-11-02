@@ -59,7 +59,7 @@ volatile long totalEncoderTicks2 = 0; // Motor 2 (Left)
 
 // Timing Variables for RPM Calculation
 unsigned long lastRPMCalcTime = 0;
-const unsigned long RPM_CALC_INTERVAL = 50; // 100 ms
+const unsigned long RPM_CALC_INTERVAL = 10; // 100 ms
 
 // RPM Calculation Variables
 double currentRPM1 = 0.0;
@@ -94,7 +94,7 @@ double targetError = 0.0;
 
 // PID Timing Variables
 unsigned long lastPIDTime = 0;
-const unsigned long PID_INTERVAL = 100; // 100 ms
+const unsigned long PID_INTERVAL = 10; // 100 ms
 
 // Debounce Variables for Button
 int buttonState = HIGH;

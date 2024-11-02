@@ -19,5 +19,7 @@ void calculatePID();
 // Function to apply the calculated PID output to control the motors
 void applyMotorControl();
 
+void applyPIDControl();
+
 
 #endif //SLAVELINEFOLLOWER_MOTOR_H

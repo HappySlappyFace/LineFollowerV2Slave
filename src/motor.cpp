@@ -1,9 +1,18 @@
-//
-// Created by hsf on 10/11/24.
-//
-
 #include "motor.h"
 #include "declarations.h"
+#include <PIDController.h>  // Include the PIDController library
+
+// =========================
+// === PID Controller Setup ===
+// =========================
+
+// Initialize PID controllers for each motor
+PIDController pidMotor1;
+PIDController pidMotor2;
+
+double sensitivityDivisor = 10.0;
+
+// PID tunings
 
 // =========================
 // === Constrain Function ===
@@ -34,8 +43,6 @@ void calculateRPM() {
     const double ticksPerRevolution = 204.0; // Adjust based on your encoder
 
     // Calculate RPM
-    // RPM = (deltaTicks / ticksPerRevolution) * (60 / deltaTime)
-    // Here, deltaTime = RPM_CALC_INTERVAL in seconds
     currentRPM1 = (deltaTicks1 / ticksPerRevolution) * (60.0 / (RPM_CALC_INTERVAL / 1000.0));
     currentRPM2 = (deltaTicks2 / ticksPerRevolution) * (60.0 / (RPM_CALC_INTERVAL / 1000.0));
 
@@ -49,83 +56,53 @@ void calculateRPM() {
 }
 
 // ============================
-// === PID Calculation Function ===
+// === Initialize PID Controllers ===
 // ============================
 
-void calculatePID() {
-    // Calculate Error (Setpoint RPM - Current RPM)
-    error1 = (setpointRPM1 - currentRPM1) - targetError;
-    error2 = (setpointRPM2 - currentRPM2) + targetError;
+void initializePIDControllers() {
+    // Configure PID parameters for Motor 1
+    pidMotor1.begin();
+    pidMotor1.tune(kp, ki, kd);
+    pidMotor1.setpoint(setpointRPM1);
+    pidMotor1.limit(-255, 255);          // Constrain output to PWM range
+    pidMotor1.minimize(sensitivityDivisor);  // Set divisor to scale down PID output
 
-    // Implement Deadband
-    if (abs(error1) < deadband) {
-        error1 = 0.0;
-    }
+    // Configure PID parameters for Motor 2
+    pidMotor2.begin();
+    pidMotor2.tune(kp, ki, kd);
+    pidMotor2.setpoint(setpointRPM2);
+    pidMotor2.limit(-255, 255);          // Constrain output to PWM range
+    pidMotor2.minimize(sensitivityDivisor);  // Set divisor to scale down PID output
+}
 
-    if (abs(error2) < deadband) {
-        error2 = 0.0;
-    }
+// ============================
+// === Apply PID Control ===
+// ============================
 
-    // Reset Integral and Derivative Terms if Error is Zero
-    if (error1 == 0.0) {
-        integral1 = 0.0;
-        derivative1 = 0.0;
-    } else {
-        // Calculate Integral with Anti-Windup
-        integral1 += error1 * (PID_INTERVAL / 1000.0);
-
-        // Constrain Integral Term
-        if (integral1 > integralMax) integral1 = integralMax;
-        if (integral1 < integralMin) integral1 = integralMin;
-    }
-
-    if (error2 == 0.0) {
-        integral2 = 0.0;
-        derivative2 = 0.0;
-    } else {
-        integral2 += error2 * (PID_INTERVAL / 1000.0);
-
-        if (integral2 > integralMax) integral2 = integralMax;
-        if (integral2 < integralMin) integral2 = integralMin;
-    }
-
-    // Calculate Derivative
-    derivative1 = (error1 - previousError1) / (PID_INTERVAL / 1000.0);
-    derivative2 = (error2 - previousError2) / (PID_INTERVAL / 1000.0);
-
-    // Compute PID Output
-    output1 = kp * error1 + ki * integral1 + kd * derivative1;
-    output2 = kp * error2 + ki * integral2 + kd * derivative2;
-
-    // Constrain PID Output to PWM Range
-    output1 = constrainValue(output1, -255.0, 255.0);
-    output2 = constrainValue(output2, -255.0, 255.0);
-
-    // Save Current Error for Next Derivative Calculation
-    previousError1 = error1;
-    previousError2 = error2;
+void applyPIDControl() {
+    // Update current values in the PID controllers
+    output1 = pidMotor1.compute(currentRPM1);
+    output2 = pidMotor2.compute(currentRPM2);
 
     // Debugging Information
     if(debugPID){
-
-        Serial.print("Motor 1 - Error: ");
-        Serial.print(error1);
+        Serial.print("Motor 1 - Setpoint: ");
+        Serial.print(setpointRPM1);
+        Serial.print(", Current RPM: ");
+        Serial.print(currentRPM1);
         Serial.print(", Output: ");
-        Serial.print(output1);
-        Serial.print(", Integral: ");
-        Serial.print(integral1);
-        Serial.print(", Derivative: ");
-        Serial.println(derivative1);
+        Serial.println(output1);
 
-        Serial.print("Motor 2 - Error: ");
-        Serial.print(error2);
+        Serial.print("Motor 2 - Setpoint: ");
+        Serial.print(setpointRPM2);
+        Serial.print(", Current RPM: ");
+        Serial.print(currentRPM2);
         Serial.print(", Output: ");
-        Serial.print(output2);
-        Serial.print(", Integral: ");
-        Serial.print(integral2);
-        Serial.print(", Derivative: ");
-        Serial.println(derivative2);
+        Serial.println(output2);
     }
+
+    // Apply the motor control based on the PID output
+    applyMotorControl();
 }
 
 // ============================
@@ -138,7 +115,7 @@ void applyMotorControl() {
         ledcWrite(PWM_CHANNEL_RIGHT_FORWARD, (int)output1);
         ledcWrite(PWM_CHANNEL_RIGHT_BACKWARD, 0);
     } else if (output1 < 0) {
-        ledcWrite(PWM_CHANNEL_RIGHT_BACKWARD, (int)(-output1)); // Make pidOut positive
+        ledcWrite(PWM_CHANNEL_RIGHT_BACKWARD, (int)(-output1)); // Make output positive
         ledcWrite(PWM_CHANNEL_RIGHT_FORWARD, 0);
     } else {
         ledcWrite(PWM_CHANNEL_RIGHT_FORWARD, 0);
@@ -150,7 +127,7 @@ void applyMotorControl() {
         ledcWrite(PWM_CHANNEL_LEFT_FORWARD, (int)output2);
         ledcWrite(PWM_CHANNEL_LEFT_BACKWARD, 0);
     } else if (output2 < 0) {
-        ledcWrite(PWM_CHANNEL_LEFT_BACKWARD, (int)(-output2)); // Make pidOut positive
+        ledcWrite(PWM_CHANNEL_LEFT_BACKWARD, (int)(-output2)); // Make output positive
         ledcWrite(PWM_CHANNEL_LEFT_FORWARD, 0);
     } else {
         ledcWrite(PWM_CHANNEL_LEFT_FORWARD, 0);

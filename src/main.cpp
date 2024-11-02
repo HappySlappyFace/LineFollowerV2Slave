@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include <IRSensors.h>
-
+// #include <IRSensors.h>
+#include <QTRSensors.h>
 #include "declarations.h"
 #include "motor.h"
 #include "setup.h"
@@ -11,16 +11,21 @@
 // =====================
 // === Setup Function ===
 // =====================
+const int numSensors = 9;
+const uint8_t sensorPins[numSensors] = {34, 35, 32, 33, 25, 26, 27, 14, 12};
+
+QTRSensors qtr;  // Initialize with your pin array and number of sensors
+uint16_t sensorValues[numSensors];
 
 CommandLibrary cl(false);
-IRSensors irSensors;
+// IRSensors irSensors;
 
 unsigned long lastCommandTime = 0;
 unsigned long lastPIDSent = 0;
 
-const unsigned long commandInterval = 5000;  //     500 ms delay between commands
+const unsigned long commandInterval = 1500;  //     500 ms delay between commands
 
-int commandIndex = 0;
+int commandIndex = 3;
 int test=1;
 
 void setup() {
@@ -29,7 +34,7 @@ void setup() {
     Serial.begin(115200);
     while (!Serial) { ; } // Wait for Serial to initialize
 
-    mySerial.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+    // mySerial.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
 
     // Initialize PWM Channels
     setupPWM();
@@ -37,19 +42,22 @@ void setup() {
     // Initialize Encoder Pins and Attach Interrupts
     initializeEncoders();
 
-    irSensors.initialize();
+    qtr.setSensorPins((const uint8_t[]){34, 35, 32, 33, 25, 26, 27, 14, 12},numSensors);
+    qtr.setTypeAnalog();
 
     Serial.println("Calibrating sensors...");
-    irSensors.calibrate();
+
+    cl.setRPM(100,-100);
+
+    for (int i = 0; i < 200; i++) {  // Adjust 400 as needed for thorough calibration
+        qtr.calibrate();
+        delay(20);  // Short delay between readings
+    }
     Serial.println("Calibration complete.");
 
-    // Set Button Pin as Input with Internal Pull-Up
-    // pinMode(BUTTON_PIN, INPUT_PULLUP);
 
-    // Initialize RPM Calculation Timing
+    // Initialize Timings
     lastRPMCalcTime = millis();
-
-    // Initialize PID Timing
     lastPIDTime = millis();
 }
 
@@ -59,8 +67,9 @@ void setup() {
 
 void loop() {
     unsigned long currentTime = millis();
-    irSensors.readSensorArray();
-    // irSensors.printSensorValues();
+    qtr.readCalibrated(sensorValues);
+    int position = qtr.readLineBlack(sensorValues);
+
     // Calculate RPM at Regular Intervals
     if (currentTime - lastRPMCalcTime >= RPM_CALC_INTERVAL) {
         calculateRPM();
@@ -69,15 +78,18 @@ void loop() {
 
     // PID Control at Regular Intervals
     if (currentTime - lastPIDTime >= PID_INTERVAL) {
-        calculatePID();
-        applyMotorControl();
+        // calculatePID();
+        // applyPIDControl();
+        applyPIDControl();
         lastPIDTime = currentTime;
     }
-    int error = irSensors.calculateError();
-    cl.setTarget(error);
+    // int error = irSensors.calculateError();
+    // cl.setTarget(error);
 
 
-    // Serial.println(error);
+    Serial.println(position);
+    double error = position - 4000;
+    // double correction = pidOutput(error);
     if(test){
         // if (millis() - lastPIDSent>=1000) {
         //     lastPIDSent = millis();
